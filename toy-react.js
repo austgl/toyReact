@@ -16,46 +16,35 @@ export class Component {
   get vdom () {
     return this.render().vdom;
   }
-  // get vChildren () {
-  //   return this.children.map(child => child.vdom)
-  // }
   [RENDER_TO_DOM](range) {
     this._range = range;
     this._vdom = this.vdom;
     this._vdom[RENDER_TO_DOM](range);
   }
-  // rerender() {
-  //   let oldRange = this._range;
-
-  //   let range = document.createRange();
-  //   range.setStart(oldRange.startContainer, oldRange.startOffset);
-  //   range.setEnd(oldRange.startContainer, oldRange.startOffset);
-  //   this[RENDER_TO_DOM](range);
-
-  //   oldRange.setStart(range.endContainer, range.endOffset);
-  //   oldRange.deleteContents();
-  // }
   update() {
     let isSameNode = (oldNode, newNode) => {
       if (oldNode.type !== newNode.type) {
         return false;
       }
+
       for (let name in newNode.props) {
         // if (newNode.props.hasOwnProperty(name)) {
           if (newNode.props[name] !== oldNode.props[name]) {
             return false;
           }
         // }
-        if (Object.keys(oldNode.props).length > Object.keys(newNode.props).length) {
+      }
+
+      if (Object.keys(oldNode.props).length > Object.keys(newNode.props).length) {
+        return false;
+      }
+
+      if (newNode.type === '#text') {
+        if (newNode.content !== oldNode.content) {
           return false;
         }
-        if (newNode.type === '#text') {
-          if (newNode.content !== oldNode.content) {
-            return false;
-          }
-        }
-        return true;
       }
+      return true;
     }
     let update = (oldNode, newNode) => {
       // type, props, children
@@ -76,10 +65,9 @@ export class Component {
       let tailRange = oldChildren[oldChildren.length - 1]._range
 
       for (let i = 0; i < newChildren.length; i++) {
-        let newChild = newChildren[i]
-        // let oldChild = oldChildren[i]
+        let newChild = newChildren[i];
+        let oldChild = oldChildren[i];
         if (i < oldChildren.length) {
-          let oldChild = oldChildren[i]
           update(oldChild, newChild)
         } else {
           let range = document.createRange();
@@ -91,8 +79,9 @@ export class Component {
       }
 
     }
+
     let vdom = this.vdom;
-    update(this._vdom, this.vdom)
+    update(this._vdom, vdom)
     this._vdom = vdom;
   }
   setState(newState) {
@@ -121,33 +110,10 @@ class ElementWrapper extends Component {
     super(type);
     this.type = type;
   }
-  // setAttribute(name, value) {
-  //   if (name.match(/^on([\s\S]+)$/)) {
-  //     this.root.addEventListener(RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()), value);
-  //   } else {
-  //     if (name === "className") {
-  //       this.root.setAttribute("class", value)
-  //     } else {
-  //       this.root.setAttribute(name, value);
-  //     }
-  //   }
-  // }
   get vdom () {
     this.vChildren = this.children.map(child => child.vdom)
     return this;
-    // {
-    //   type: this.type,
-    //   props: this.props,
-    //   children: this.children.map(child => child.vdom)
-    // }
   }
-  // appendChild(component) {
-  //   let range = document.createRange();
-  //   range.setStart(this.root, this.root.childNodes.length);
-  //   range.setEnd(this.root, this.root.childNodes.length);
-  //   component[RENDER_TO_DOM](range);
-  //   // this.root.appendChild(component.root)
-  // }
   [RENDER_TO_DOM](range) {
     this._range = range;
     
@@ -189,10 +155,6 @@ class TextWrapper extends Component {
   }
   get vdom () {
     return this;
-    // {
-    //   type: '#text',
-    //   content: this.content
-    // }
   }
   [RENDER_TO_DOM](range) {
     this._range = range;
@@ -230,7 +192,6 @@ export function createElement(type, attributes, ...children) {
         continue;
       }
       if ((typeof child === "object") && (child instanceof Array)) {
-        // console.log(child)
         insertChildren(child);
       } else {
         e.appendChild(child);
